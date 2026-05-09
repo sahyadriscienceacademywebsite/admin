@@ -41,7 +41,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const el = document.getElementById(elementId);
     el.textContent = msg;
     el.className = `status-msg ${type}`;
-    setTimeout(() => { el.textContent = ''; }, 4000);
+    
+    // Also log to a global debug area if it exists
+    const debugArea = document.getElementById('debugLog');
+    if (debugArea) {
+      const time = new Date().toLocaleTimeString();
+      debugArea.innerHTML += `<div class="${type}">[${time}] ${msg}</div>`;
+      debugArea.scrollTop = debugArea.scrollHeight;
+    }
+    
+    if (type === 'success') setTimeout(() => { el.textContent = ''; }, 4000);
   }
 
   // GitHub API Wrapper
@@ -55,27 +64,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/vnd.github.v3+json'
-      }
-    });
+    console.log("Fetching from GitHub:", url);
 
-    if (response.status === 401) {
-      throw new Error("Invalid Token: Your GitHub token is incorrect or expired.");
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+
+      if (response.status === 401) {
+        throw new Error("401 Unauthorized: Your Token is invalid or expired. Please generate a new Classic PAT with 'repo' scope.");
+      }
+      if (response.status === 403) {
+        throw new Error("403 Forbidden: You might have hit a rate limit or your token lacks permissions.");
+      }
+      if (response.status === 404) {
+        throw new Error(`404 Not Found: Could not find "${path}" in ${owner}/${repo}. Check your Repo Name and Owner!`);
+      }
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(`GitHub Error (${response.status}): ${errData.message || 'Unknown error'}`);
+      }
+      
+      const data = await response.json();
+      const content = decodeURIComponent(escape(atob(data.content)));
+      return { content: JSON.parse(content), sha: data.sha };
+    } catch (e) {
+      console.error("GitHub Fetch Error:", e);
+      throw e;
     }
-    if (response.status === 404) {
-      throw new Error(`File Not Found: Could not find "${path}" in ${owner}/${repo}. Check your names!`);
-    }
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(`GitHub Error (${response.status}): ${errData.message || 'Unknown error'}`);
-    }
-    
-    const data = await response.json();
-    const content = decodeURIComponent(escape(atob(data.content)));
-    return { content: JSON.parse(content), sha: data.sha };
   }
 
   async function pushFileToGithub(path, contentObj, sha, commitMsg) {
