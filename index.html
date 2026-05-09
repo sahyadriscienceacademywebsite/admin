@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sahyadri Admin Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+
+<body>
+
+  <header class="admin-header">
+    <div class="container">
+      <div class="brand">
+        <h2>Sahyadri Admin Panel</h2>
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <span class="badge">GitHub API Mode</span>
+          <button id="openSettingsBtn" class="btn btn-outline" style="border-color: white; color: white;">⚙️ Settings</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settingsModal" style="display: none;">
+    <div class="modal-content card config-card">
+      <div class="card-header">
+        <h3>GitHub Configuration</h3>
+        <button id="closeSettingsBtn" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--navy);">&times;</button>
+      </div>
+      <p class="muted">Enter your repository details to allow the admin panel to push changes directly.</p>
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label>GitHub Username (Owner)</label>
+          <input type="text" id="ghOwner" placeholder="e.g. sahyadriscienceacademywebsite" />
+        </div>
+        <div class="form-group full-width">
+          <label>Repository Name</label>
+          <input type="text" id="ghRepo" placeholder="e.g. website" />
+        </div>
+        <div class="form-group full-width">
+          <label>Personal Access Token (PAT)</label>
+          <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx" />
+        </div>
+      </div>
+      <div style="display: flex; gap: 12px; margin-top: 16px;">
+        <button class="btn btn-primary" id="saveConfigBtn">Save & Close</button>
+        <span id="configStatus" class="status-msg" style="align-self: center;"></span>
+      </div>
+    </div>
+  </div>
+
+  <main class="container admin-main">
+
+    <!-- Tab Navigation -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="tab-news">News & Updates</button>
+      <button class="tab-btn" data-tab="tab-results">Results & Achievers</button>
+      <button class="tab-btn" data-tab="tab-ticker">Dynamic Ticker</button>
+      <button class="tab-btn" data-tab="tab-courses">Course Programs</button>
+      <button class="tab-btn" data-tab="tab-faculty">Expert Faculty</button>
+      <button class="tab-btn" data-tab="tab-gallery">📸 Campus Gallery</button>
+    </div>
+
+    <!-- TAB: CAMPUS GALLERY -->
+    <section class="card tab-content" id="tab-gallery">
+      <div class="card-header">
+        <h3>Manage Campus Gallery</h3>
+        <button class="btn btn-outline" id="loadGalleryBtn">Load Current Photos</button>
+      </div>
+
+      <div class="editor-section" id="galleryEditor" style="display: none;">
+        <h4>Upload New Campus Photo</h4>
+        <p class="muted" id="galleryCountMsg" style="margin-bottom: 16px;"></p>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Photo Caption (Optional)</label>
+            <input type="text" id="galleryCaption" placeholder="e.g. Science Lab Session" />
+          </div>
+          <div class="form-group">
+            <label>Photo Upload (JPG / PNG / WEBP)</label>
+            <input type="file" id="galleryImgFile" accept="image/*" />
+            <small class="muted">Max 40 photos allowed. Image is uploaded to GitHub automatically.</small>
+          </div>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <button class="btn btn-success" id="pushGalleryBtn">Upload & Push to GitHub</button>
+          <span id="galleryStatus" class="status-msg"></span>
+        </div>
+
+        <h4 style="margin-top: 30px;">Existing Photos <span id="galleryPhotoCount" style="font-size:14px; color:#64748b;"></span></h4>
+        <div id="existingGalleryList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; margin-top: 16px;"></div>
+      </div>
+    </section>
+
+    <!-- TAB: NEWS -->
+    <section class="card tab-content active" id="tab-news">
+      <div class="card-header">
+        <h3>Manage News Updates</h3>
+        <button class="btn btn-outline" id="loadNewsBtn">Load Current News</button>
+      </div>
+      
+      <div class="editor-section" id="newsEditor" style="display: none;">
+        <h4 id="newsFormTitle">Add New Update</h4>
+        <input type="hidden" id="newsEditIndex" value="-1" />
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Title</label>
+            <input type="text" id="newsTitle" placeholder="e.g. New Batch Starting..." />
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="newsDate" />
+          </div>
+          <div class="form-group">
+            <label>Tag (Label)</label>
+            <input type="text" id="newsTag" placeholder="e.g. Announcement" />
+          </div>
+          <div class="form-group">
+            <label>Tag Type (For Color)</label>
+            <select id="newsTagType">
+              <option value="announcement">Announcement (Blue)</option>
+              <option value="result">Result (Green)</option>
+              <option value="tips">Tips (Orange)</option>
+              <option value="event">Event (Blue)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Image Upload (Optional)</label>
+            <input type="file" id="newsImgFile" accept="image/*" />
+          </div>
+          <div class="form-group">
+            <label>Link / URL (Optional)</label>
+            <input type="text" id="newsLink" value="contact.html" />
+          </div>
+          <div class="form-group full-width">
+            <label>Description</label>
+            <textarea id="newsDesc" rows="3" placeholder="Brief details about the update..."></textarea>
+          </div>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <button class="btn btn-success" id="pushNewsBtn">Add & Push to GitHub</button>
+          <button class="btn btn-outline" id="cancelNewsEditBtn" style="display: none;">Cancel Edit</button>
+          <span id="newsStatus" class="status-msg"></span>
+        </div>
+        
+        <h4 style="margin-top: 30px;">Existing News</h4>
+        <div id="existingNewsList" class="item-list"></div>
+      </div>
+    </section>
+
+    <!-- TAB: RESULTS -->
+    <section class="card tab-content" id="tab-results">
+      <div class="card-header">
+        <h3>Manage Results</h3>
+        <button class="btn btn-outline" id="loadResultsBtn">Load Current Results</button>
+      </div>
+      
+      <div class="editor-section" id="resultsEditor" style="display: none;">
+        <h4 id="resultsFormTitle">Add New Image Result</h4>
+        <input type="hidden" id="resultsEditIndex" value="-1" />
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label>Date</label>
+            <input type="date" id="resDate" />
+          </div>
+          <div class="form-group full-width">
+            <label>Image Upload (9:16 Aspect Ratio Recommended)</label>
+            <input type="file" id="resImgFile" accept="image/*" />
+            <small class="muted">Image will be automatically uploaded to your GitHub repository.</small>
+          </div>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <button class="btn btn-success" id="pushResultsBtn">Add & Push to GitHub</button>
+          <button class="btn btn-outline" id="cancelResultsEditBtn" style="display: none;">Cancel Edit</button>
+          <span id="resultsStatus" class="status-msg"></span>
+        </div>
+
+        <h4 style="margin-top: 30px;">Existing Results</h4>
+        <div id="existingResultsList" class="item-list"></div>
+      </div>
+    </section>
+
+    <!-- TAB: TICKER -->
+    <section class="card tab-content" id="tab-ticker">
+      <div class="card-header">
+        <h3>Manage Dynamic Ticker</h3>
+        <button class="btn btn-outline" id="loadTickerBtn">Load Current Ticker</button>
+      </div>
+      
+      <div class="editor-section" id="tickerEditor" style="display: none;">
+        <p class="muted">Enter one announcement per line. These will scroll across the top of the website.</p>
+        <div class="form-group full-width">
+          <textarea id="tickerTextarea" rows="8" placeholder="📢 Announcement 1&#10;🏆 Announcement 2"></textarea>
+        </div>
+        <button class="btn btn-success" id="pushTickerBtn">Save & Push to GitHub</button>
+        <span id="tickerStatus" class="status-msg"></span>
+      </div>
+    </section>
+
+    <!-- TAB: COURSES -->
+    <section class="card tab-content" id="tab-courses">
+      <div class="card-header">
+        <h3>Manage Course Programs</h3>
+        <button class="btn btn-outline" id="loadCoursesBtn">Load Course Data</button>
+      </div>
+      
+      <div class="editor-section" id="coursesEditor" style="display: none;">
+        <h4 id="courseFormTitle">Edit Program Card</h4>
+        <input type="hidden" id="courseEditIndex" value="-1" />
+        <p class="muted" style="margin-bottom: 20px;">Note: You can only edit the text content for the existing 8 program cards.</p>
+        
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label>Tag (e.g. Program 01 — Foundation)</label>
+            <input type="text" id="courseTag" placeholder="Program Tag" />
+          </div>
+          <div class="form-group">
+            <label>Title (Use &lt;br&gt; for line break)</label>
+            <input type="text" id="courseTitle" placeholder="e.g. Early&lt;br&gt;Learning" />
+          </div>
+          <div class="form-group">
+            <label>Classes (e.g. Class 5th to 7th)</label>
+            <input type="text" id="courseScript" placeholder="Classes text" />
+          </div>
+          <div class="form-group full-width">
+            <label>Description</label>
+            <textarea id="courseDesc" rows="3" placeholder="Brief description..."></textarea>
+          </div>
+          <div class="form-group full-width">
+            <label>Subjects / Highlights (One per line)</label>
+            <textarea id="courseSubjects" rows="6" placeholder="Subject 1&#10;Subject 2"></textarea>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <button class="btn btn-success" id="pushCoursesBtn">Update & Push to GitHub</button>
+          <button class="btn btn-outline" id="cancelCourseEditBtn" style="display: none;">Cancel Edit</button>
+          <span id="coursesStatus" class="status-msg"></span>
+        </div>
+
+        <h4 style="margin-top: 30px;">Existing Program Cards</h4>
+        <div id="existingCoursesList" class="item-list"></div>
+      </div>
+    </section>
+
+    <!-- TAB: FACULTY -->
+    <section class="card tab-content" id="tab-faculty">
+      <div class="card-header">
+        <h3>Manage Expert Faculty</h3>
+        <button class="btn btn-outline" id="loadFacultyBtn">Load Current Faculty</button>
+      </div>
+      
+      <div class="editor-section" id="facultyEditor" style="display: none;">
+        <h4 id="facultyFormTitle">Add New Faculty Member</h4>
+        <input type="hidden" id="facultyEditIndex" value="-1" />
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="facultyName" placeholder="e.g. Dr. Santosh Patil" />
+          </div>
+          <div class="form-group">
+            <label>Role / Subject & Experience</label>
+            <input type="text" id="facultyRole" placeholder="e.g. Senior Chemistry Head • 15+ Yrs Exp" />
+          </div>
+          <div class="form-group">
+            <label>Emoji Icon (Fallback)</label>
+            <input type="text" id="facultyEmoji" placeholder="e.g. 👨‍🏫" value="👨‍🏫" />
+          </div>
+          <div class="form-group">
+            <label>Photo Upload (Optional)</label>
+            <input type="file" id="facultyImgFile" accept="image/*" />
+          </div>
+          <div class="form-group full-width">
+            <label>Description</label>
+            <textarea id="facultyDesc" rows="3" placeholder="Brief description about the faculty member..."></textarea>
+          </div>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <button class="btn btn-success" id="pushFacultyBtn">Add & Push to GitHub</button>
+          <button class="btn btn-outline" id="cancelFacultyEditBtn" style="display: none;">Cancel Edit</button>
+          <span id="facultyStatus" class="status-msg"></span>
+        </div>
+
+        <h4 style="margin-top: 30px;">Existing Faculty Members</h4>
+        <div id="existingFacultyList" class="item-list"></div>
+      </div>
+    </section>
+    
+    <!-- DEBUG AREA -->
+    <section class="card" style="margin-top: 40px; border-color: #e2e8f0; background: #f1f5f9;">
+      <div class="card-header">
+        <h3>System Debug Log</h3>
+        <button class="btn btn-outline" onclick="document.getElementById('debugLog').innerHTML = ''">Clear Log</button>
+      </div>
+      <div id="debugLog" style="height: 150px; overflow-y: auto; padding: 15px; font-family: monospace; font-size: 13px; line-height: 1.6; background: #fff; border-radius: 8px; border: 1px solid #cbd5e1;">
+        <div class="muted">Waiting for actions...</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+
+</html>
